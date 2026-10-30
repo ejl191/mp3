@@ -26,7 +26,7 @@ jobs:
       - name: Prepare signing key
         id: key
         env:
-          KEYSTORE_B64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+          KEYSTORE_B64: ${{ secrets.SIGNING_KEYSTORE_BASE64 || secrets.MP3 }}
         run: |
           mkdir -p keystore
           if [ -n "$KEYSTORE_B64" ]; then

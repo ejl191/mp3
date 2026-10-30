@@ -18,7 +18,7 @@ You do these steps once. After that, every push builds a new APK.
 Google identifies the app by its signing key, so every build must be signed with the same key. The key is kept out of this public repo and stored as a GitHub secret.
 
 1. Open the repo on GitHub, then go to **Settings → Secrets and variables → Actions → New repository secret**.
-2. Name: `SIGNING_KEYSTORE_BASE64`
+2. Name: `SIGNING_KEYSTORE_BASE64` (a secret named `MP3` also works)
 3. Value: the entire contents of `SIGNING_KEYSTORE_BASE64.txt`, which Claude provided. Keep a private backup of that file too. If you lose the key, you'll need a new one, which means repeating step 2 and reinstalling the app.
 
 The key's fingerprint, which you'll need in step 2, is:
