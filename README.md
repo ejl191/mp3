@@ -30,16 +30,19 @@ SHA-1: 66:8A:10:39:A0:8F:CF:0F:1B:A9:F1:4B:8A:5F:30:58:4B:AE:94:18
 ### 2. Create a Google Cloud OAuth client (free)
 
 1. Go to <https://console.cloud.google.com/> and create a project, for example "Drive Player".
-2. **APIs & Services → Library**: search for **Google Drive API** and click **Enable**.
-3. **APIs & Services → OAuth consent screen** (labelled "Google Auth Platform" in newer consoles):
-   - User type: **External**. App name: "Drive Player". Enter your email as the support and developer contact.
-   - **Data access / Scopes**: add `https://www.googleapis.com/auth/drive.readonly`.
-   - **Audience / Test users**: add your own Google account. Leave the app in **Testing** mode. You don't need verification for your own use.
-4. **APIs & Services → Credentials → Create credentials → OAuth client ID**:
+2. Enable the Drive API: search for **Google Drive API** with the 🔍 at the top, open it, and tap **Enable**.
+3. Open **Google Auth Platform** (in the ☰ menu, or search "OAuth") and tap **Get started**:
+   - **App information:** name it "Drive Player" and enter your email as the support email.
+   - **Audience:** choose **External**.
+   - **Contact information:** your email.
+   - **Finish:** accept the policy, then tap **Create**.
+4. **Audience → Test users → + Add users:** add your own Google account. Leave the publishing status on **Testing**.
+5. **Data Access → Add or remove scopes:** tick `.../auth/drive.readonly` (or paste `https://www.googleapis.com/auth/drive.readonly` under "Manually add scopes"), then tap **Update → Save**.
+6. **Clients → + Create client:**
    - Application type: **Android**
    - Package name: `com.ejl191.driveplayer`
    - SHA-1 certificate fingerprint: the SHA-1 from step 1
-   - Click **Create**. You don't need to copy anything into the app. Google matches the app by package name and fingerprint.
+   - Tap **Create**. You don't need to copy anything into the app. Google matches the app by package name and fingerprint.
 
 When you sign in, Google will warn that the app isn't verified. That's expected for a personal app in Testing mode. Tap **Continue**.
 
