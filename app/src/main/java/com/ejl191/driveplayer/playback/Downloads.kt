@@ -135,11 +135,11 @@ class DownloadWorker(context: Context, params: WorkerParameters) : CoroutineWork
             .setOngoing(true)
             .setSilent(true)
             .build()
-        val id = id.hashCode()
+        val notificationId = id.hashCode()
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ForegroundInfo(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            ForegroundInfo(notificationId, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
         } else {
-            ForegroundInfo(id, notification)
+            ForegroundInfo(notificationId, notification)
         }
     }
 

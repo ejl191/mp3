@@ -259,8 +259,8 @@ fun BrowseScreen(
                                 modifier = Modifier.clickable { vm.addFile(file, onPlay) },
                                 leadingContent = { Icon(Icons.Default.AudioFile, contentDescription = null) },
                                 headlineContent = { Text(file.name) },
-                                supportingContent = file.size?.toLongOrNull()?.let { size ->
-                                    { Text("%.1f MB".format(size / 1_048_576.0)) }
+                                supportingContent = {
+                                    file.size?.toLongOrNull()?.let { Text("%.1f MB".format(it / 1_048_576.0)) }
                                 },
                             )
                         }
