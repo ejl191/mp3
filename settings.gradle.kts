@@ -14,4 +14,3 @@ dependencyResolutionManagement {
 }
 rootProject.name = "DrivePlayer"
 include(":app")
-include(":zorkapp")

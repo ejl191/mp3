@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <style name="Theme.Zork" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">@color/dark_bg</item>
-        <item name="android:statusBarColor">@color/dark_surface</item>
-        <item name="android:navigationBarColor">@color/dark_surface</item>
-    </style>
-</resources>

@@ -54,10 +54,6 @@ When you sign in, Google will warn that the app isn't verified. That's expected 
 
 To update later, install a newer release over the old one. Your library and positions are kept.
 
-## Zork app
-
-Each build also produces `Zork-N.apk`, a separate app with Zork I, II and III (the original Infocom games, released by Microsoft under the MIT license). Install it from the same Releases page. It works offline, saves your place after every move, and doesn't need any of the Google setup above. See [`zork/README.md`](zork/README.md).
-
 ## Using it
 
 1. **Sign in with Google**, then tap **Add from Drive**.
