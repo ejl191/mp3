@@ -43,13 +43,20 @@ jobs:
       - name: Build
         run: ./gradlew --no-daemon assembleRelease
 
-      - name: Rename APK
-        run: cp app/build/outputs/apk/release/app-release.apk DrivePlayer-${{ github.run_number }}.apk
+      - name: Rename APKs
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk DrivePlayer-${{ github.run_number }}.apk
+          cp zorkapp/build/outputs/apk/release/zorkapp-release.apk Zork-${{ github.run_number }}.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: DrivePlayer-${{ github.run_number }}
           path: DrivePlayer-${{ github.run_number }}.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Zork-${{ github.run_number }}
+          path: Zork-${{ github.run_number }}.apk
 
       - name: Publish release
         if: steps.key.outputs.real == 'true'
@@ -58,5 +65,7 @@ jobs:
           tag_name: build-${{ github.run_number }}
           name: Drive Player build ${{ github.run_number }}
           target_commitish: ${{ github.sha }}
-          body: Built from `${{ github.ref_name }}` @ ${{ github.sha }}. Open this page on your phone and tap the APK to install.
-          files: DrivePlayer-${{ github.run_number }}.apk
+          body: Built from `${{ github.ref_name }}` @ ${{ github.sha }}. Open this page on your phone and tap an APK to install it (DrivePlayer for audiobooks, Zork for the games).
+          files: |
+            DrivePlayer-${{ github.run_number }}.apk
+            Zork-${{ github.run_number }}.apk

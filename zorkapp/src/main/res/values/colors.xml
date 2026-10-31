@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Match the page's light and dark palettes in zork/src/page.html. -->
+    <color name="light_bg">#ECEEE9</color>
+    <color name="light_surface">#DFE3DC</color>
+    <color name="dark_bg">#12181C</color>
+    <color name="dark_surface">#1B2329</color>
+    <color name="brass">#DCAA4A</color>
+    <color name="ic_launcher_background">#12181C</color>
+</resources>

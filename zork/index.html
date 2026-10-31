@@ -9,9 +9,11 @@
 <body>
 <title>Zork Trilogy</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<!--FONTS-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=IM+Fell+English+SC&family=IBM+Plex+Sans+Condensed:wght@400;500;600&display=swap">
+<!--/FONTS-->
 <style>
 /* Layout: a library of three games, then a full-height terminal (status bar / transcript / command bar) lit like a brass lantern in a cave. */
 :root {
@@ -126,15 +128,15 @@ form.line .btn { padding: 9px 14px; }
   <header class="masthead">
     <span class="eyebrow">Infocom · 1980–1982 · Text adventures</span>
     <h1>Zork</h1>
-    <p>The original Zork trilogy, running in your browser. Your place is saved after every move, so you can close this page and pick up later.</p>
+    <p>The original Zork trilogy. Your place is saved after every move, so you can close it and pick up later.</p>
   </header>
   <section class="games" id="games"></section>
   <section class="tips">
     <h3>How to play</h3>
     <p>Type what you want to do in plain English: <code>open mailbox</code>, <code>take lamp</code>, <code>go north</code>, <code>put sword in case</code>. The buttons above the keyboard cover directions and common commands.</p>
-    <p>Useful commands: <code>look</code>, <code>inventory</code>, <code>score</code>, <code>verbose</code> for full room descriptions, and <code>again</code> to repeat. <code>save</code> and <code>restore</code> keep one extra save slot per game on this phone.</p>
+    <p>Useful commands: <code>look</code>, <code>inventory</code>, <code>score</code>, <code>verbose</code> for full room descriptions, and <code>again</code> to repeat. <code>save</code> and <code>restore</code> keep one extra save slot per game.</p>
   </section>
-  <p class="credit">Zork I, II and III were written by Tim Anderson, Marc Blank, Bruce Daniels and Dave Lebling. The story files are the originals from Microsoft's MIT-licensed source release (<a href="https://github.com/historicalsource" target="_blank" rel="noopener">historicalsource on GitHub</a>). Saves are kept in this browser only.</p>
+  <p class="credit">Zork I, II and III were written by Tim Anderson, Marc Blank, Bruce Daniels and Dave Lebling. The story files are the originals from Microsoft's MIT-licensed source release (<a href="https://github.com/historicalsource" target="_blank" rel="noopener">historicalsource on GitHub</a>). Saves are kept on this device only.</p>
 </main>
 
 <div id="game" hidden>
@@ -912,6 +914,12 @@ form.line .btn { padding: 9px 14px; }
     window.visualViewport.addEventListener('resize', fitViewport);
     window.visualViewport.addEventListener('scroll', () => { if (!$('game').hidden) window.scrollTo(0, 0); });
   }
+  // The Android app calls this for its back button: true means the page handled it.
+  window.zorkBack = () => {
+    if ($('game').hidden) return false;
+    $('back').click();
+    return true;
+  };
   document.addEventListener('visibilitychange', () => { if (document.hidden) autosave(); });
 
   renderLibrary();
