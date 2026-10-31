@@ -1,25 +1,20 @@
 package com.ejl191.driveplayer.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.DownloadDone
+import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import androidx.work.WorkInfo
@@ -41,89 +35,85 @@ import com.ejl191.driveplayer.data.BookWithTracks
 import com.ejl191.driveplayer.playback.Downloads
 import kotlinx.coroutines.launch
 
+/** Bottom area that extends the chrome behind the navigation bar. */
+@Composable
+fun BottomDock(content: @Composable ColumnScope.() -> Unit) {
+    Column(Modifier.fillMaxWidth().background(Retro.Chrome).navigationBarsPadding(), content = content)
+}
+
+/** Collapsed one-line player, like an old player's "window shade" mode. */
 @Composable
 fun MiniPlayer(ui: PlayerUi, player: Player?, onOpen: () -> Unit) {
     if (ui.bookId == null || player == null) return
-    Surface(tonalElevation = 3.dp) {
-        Column(Modifier.navigationBarsPadding()) {
-            if (ui.durationMs > 0) {
-                LinearProgressIndicator(
-                    progress = { (ui.positionMs.toFloat() / ui.durationMs).coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+    Row(
+        Modifier.fillMaxWidth().background(Retro.Chrome).bevel().padding(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RetroIconButton(
+            if (ui.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+            if (ui.isPlaying) "Pause" else "Play",
+            onClick = { if (ui.isPlaying) player.pause() else player.play() },
+            iconSize = 18.dp,
+        )
+        Spacer(Modifier.width(4.dp))
+        LcdBox(Modifier.weight(1f).clickable(onClick = onOpen)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                MarqueeText("${ui.title}  ***  ${ui.bookTitle}  ***", Modifier.weight(1f), style = Retro.small)
+                Text(" ${formatTime(ui.positionMs)}", style = Retro.small, color = Retro.LcdGreen)
             }
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onOpen)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(ui.title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyLarge)
-                    Text(
-                        ui.bookTitle,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                IconButton(onClick = { if (ui.isPlaying) player.pause() else player.play() }) {
-                    Icon(
-                        if (ui.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (ui.isPlaying) "Pause" else "Play",
-                    )
-                }
-            }
+        }
+        Spacer(Modifier.width(4.dp))
+        RetroIconButton(Icons.Default.ExpandLess, "Open player", onOpen, iconSize = 18.dp)
+    }
+}
+
+enum class DownloadState { NONE, RUNNING, DONE }
+
+@Composable
+fun rememberDownloadState(book: BookWithTracks): DownloadState {
+    val context = LocalContext.current
+    val work by remember(book.book.id) {
+        WorkManager.getInstance(context).getWorkInfosForUniqueWorkLiveData(Downloads.workName(book.book.id))
+    }.observeAsState()
+    val running = work?.any { it.state == WorkInfo.State.RUNNING || it.state == WorkInfo.State.ENQUEUED } == true
+    return when {
+        book.allDownloaded -> DownloadState.DONE
+        running -> DownloadState.RUNNING
+        else -> DownloadState.NONE
+    }
+}
+
+/** "DL" button: starts a download, shows progress (tap to cancel), or offers to remove a finished one. */
+@Composable
+fun DownloadButton(book: BookWithTracks, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val bookId = book.book.id
+    val state = rememberDownloadState(book)
+    val done = book.tracks.count { it.downloaded }
+    var confirmRemove by remember { mutableStateOf(false) }
+
+    when (state) {
+        DownloadState.DONE -> RetroTextButton("SAVED", { confirmRemove = true }, modifier, active = true)
+        DownloadState.RUNNING -> RetroTextButton("DL $done/${book.tracks.size}", { Downloads.cancel(context, bookId) }, modifier, active = true)
+        DownloadState.NONE -> RetroTextButton("DL", { Downloads.start(context, bookId) }, modifier)
+    }
+
+    if (confirmRemove) {
+        RemoveDownloadDialog(book.book.title, onDismiss = { confirmRemove = false }) {
+            confirmRemove = false
+            scope.launch { Downloads.remove(context, bookId) }
         }
     }
 }
 
-/** Download / progress / downloaded toggle for one book. */
 @Composable
-fun DownloadButton(book: BookWithTracks) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val bookId = book.book.id
-    val work by remember(bookId) {
-        WorkManager.getInstance(context).getWorkInfosForUniqueWorkLiveData(Downloads.workName(bookId))
-    }.observeAsState()
-    val running = work?.any { it.state == WorkInfo.State.RUNNING || it.state == WorkInfo.State.ENQUEUED } == true
-    val tracks = book.tracks
-    val done = tracks.count { it.downloaded }
-    var confirmRemove by remember { mutableStateOf(false) }
-
-    when {
-        book.allDownloaded -> IconButton(onClick = { confirmRemove = true }) {
-            Icon(Icons.Default.DownloadDone, contentDescription = "Downloaded. Tap to remove the download")
-        }
-        running -> IconButton(onClick = { Downloads.cancel(context, bookId) }) {
-            Box(contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(
-                    progress = { if (tracks.isEmpty()) 0f else done.toFloat() / tracks.size },
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 3.dp,
-                )
-            }
-        }
-        else -> IconButton(onClick = { Downloads.start(context, bookId) }) {
-            Icon(Icons.Default.Download, contentDescription = "Download for offline listening")
-        }
-    }
-
-    if (confirmRemove) {
-        AlertDialog(
-            onDismissRequest = { confirmRemove = false },
-            title = { Text("Remove download?") },
-            text = { Text("\"${book.book.title}\" will stream from Drive again. Your place is kept.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmRemove = false
-                    scope.launch { Downloads.remove(context, bookId) }
-                }) { Text("Remove") }
-            },
-            dismissButton = { TextButton(onClick = { confirmRemove = false }) { Text("Cancel") } },
-        )
-    }
+fun RemoveDownloadDialog(title: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Remove download?") },
+        text = { Text("\"$title\" will stream from Drive again. Your place is kept.") },
+        confirmButton = { TextButton(onClick = onConfirm) { Text("REMOVE") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("CANCEL") } },
+    )
 }

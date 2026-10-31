@@ -1,7 +1,7 @@
 package com.ejl191.driveplayer.ui
 
 import android.widget.Toast
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,29 +11,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.LibraryBooks
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AudioFile
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,18 +25,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.ejl191.driveplayer.app
 import com.ejl191.driveplayer.data.BookWithTracks
+import com.ejl191.driveplayer.playback.Downloads
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     signedIn: Boolean?,
@@ -67,27 +48,43 @@ fun LibraryScreen(
     val books by remember { app.db.dao().library() }.collectAsState(initial = null)
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Library") }) },
-        bottomBar = { MiniPlayer(ui, player, onOpenPlayer) },
-        floatingActionButton = {
-            if (signedIn == true) {
-                ExtendedFloatingActionButton(
-                    onClick = onBrowse,
-                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                    text = { Text("Add from Drive") },
-                )
+        containerColor = Retro.Chrome,
+        topBar = { RetroTitleBar("Drive Player - Library") },
+        bottomBar = {
+            BottomDock {
+                Row(Modifier.fillMaxWidth().padding(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    RetroTextButton("+ ADD", onBrowse, enabled = signedIn == true)
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        "${books?.size ?: 0} BOOKS",
+                        Modifier.padding(top = 6.dp),
+                        style = Retro.small,
+                        color = Retro.Label,
+                    )
+                }
+                MiniPlayer(ui, player, onOpenPlayer)
             }
         },
     ) { padding ->
         val list = books
-        Column(Modifier.padding(padding).fillMaxSize()) {
-            if (signedIn == false) SignInCard(onSignIn, hasBooks = !list.isNullOrEmpty())
-            when {
-                list == null -> Unit
-                list.isEmpty() && signedIn != false -> EmptyLibrary()
-                else -> LazyColumn(Modifier.fillMaxSize()) {
-                    items(list, key = { it.book.id }) { book ->
-                        BookRow(book, isCurrent = book.book.id == ui.bookId, onPlay = { onPlay(book.book.id) })
+        Column(Modifier.padding(padding).fillMaxSize().padding(4.dp)) {
+            if (signedIn == false) {
+                SignInCard(onSignIn, hasBooks = !list.isNullOrEmpty())
+                Spacer(Modifier.height(4.dp))
+            }
+            Box(Modifier.weight(1f).fillMaxWidth().background(Retro.Lcd).bevel(raised = false)) {
+                when {
+                    list == null -> Unit
+                    list.isEmpty() -> Text(
+                        "LIBRARY EMPTY.\n\nPRESS + ADD AND PICK A DRIVE FOLDER (PLAYED AS ONE BOOK) OR A SINGLE AUDIO FILE.",
+                        Modifier.padding(8.dp),
+                        style = Retro.small,
+                        color = Retro.PlDim,
+                    )
+                    else -> LazyColumn(Modifier.fillMaxSize()) {
+                        itemsIndexed(list, key = { _, b -> b.book.id }) { i, book ->
+                            BookRow(i + 1, book, isCurrent = book.book.id == ui.bookId, onPlay = { onPlay(book.book.id) })
+                        }
                     }
                 }
             }
@@ -97,35 +94,24 @@ fun LibraryScreen(
 
 @Composable
 fun SignInCard(onSignIn: () -> Unit, hasBooks: Boolean) {
-    Card(Modifier.fillMaxWidth().padding(16.dp)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Connect Google Drive", style = MaterialTheme.typography.titleMedium)
+    RetroPanel(Modifier.fillMaxWidth()) {
+        StripeBar("Google Drive", Modifier.fillMaxWidth())
+        Spacer(Modifier.height(6.dp))
+        LcdBox(Modifier.fillMaxWidth()) {
             Text(
-                if (hasBooks) "Sign in to stream from Drive. Downloaded books still play offline."
-                else "Sign in to browse the audio files in your Drive.",
-                style = MaterialTheme.typography.bodyMedium,
+                if (hasBooks) "NOT SIGNED IN. DOWNLOADED BOOKS STILL PLAY OFFLINE."
+                else "NOT SIGNED IN. SIGN IN TO BROWSE AUDIO IN YOUR DRIVE.",
+                style = Retro.small,
+                color = Retro.LcdGreen,
             )
-            Button(onClick = onSignIn) { Text("Sign in with Google") }
         }
+        Spacer(Modifier.height(6.dp))
+        RetroTextButton("SIGN IN WITH GOOGLE", onSignIn)
     }
 }
 
 @Composable
-private fun EmptyLibrary() {
-    Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.AutoMirrored.Filled.LibraryBooks, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.height(12.dp))
-            Text(
-                "Your library is empty. Tap \"Add from Drive\" and pick a folder (played as one book) or a single audio file.",
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}
-
-@Composable
-private fun BookRow(item: BookWithTracks, isCurrent: Boolean, onPlay: () -> Unit) {
+private fun BookRow(number: Int, item: BookWithTracks, isCurrent: Boolean, onPlay: () -> Unit) {
     val context = LocalContext.current
     val app = context.app
     val scope = rememberCoroutineScope()
@@ -133,62 +119,65 @@ private fun BookRow(item: BookWithTracks, isCurrent: Boolean, onPlay: () -> Unit
     val book = item.book
     val tracks = item.tracks
     val index = item.currentIndex
+    val download = rememberDownloadState(item)
 
+    val total = tracks.takeIf { t -> t.isNotEmpty() && t.all { it.durationMs > 0 } }?.sumOf { it.durationMs }
     val status = buildString {
         if (book.currentFileId == null) {
-            append("Not started")
+            append("NOT STARTED")
         } else {
-            if (tracks.size > 1) append("Chapter ${index + 1} of ${tracks.size} · ")
-            append(formatTime(book.positionMs))
-            tracks.getOrNull(index)?.durationMs?.takeIf { it > 0 }?.let { append(" / ${formatTime(it)}") }
+            if (tracks.size > 1) append("CH ${index + 1}/${tracks.size} ")
+            append("@ ${formatTime(book.positionMs)}")
+            item.overallProgress?.let { append("  ${(it * 100).toInt()}%") }
+        }
+        when (download) {
+            DownloadState.DONE -> append("  [SAVED]")
+            DownloadState.RUNNING -> append("  [DL ${tracks.count { it.downloaded }}/${tracks.size}]")
+            DownloadState.NONE -> Unit
         }
     }
 
-    ListItem(
-        modifier = Modifier.clickable(onClick = onPlay),
-        leadingContent = {
-            Icon(
-                when {
-                    isCurrent -> Icons.Default.GraphicEq
-                    book.isFolder -> Icons.Default.Folder
-                    else -> Icons.Default.AudioFile
-                },
-                contentDescription = null,
-            )
-        },
-        headlineContent = { Text(book.title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
-        supportingContent = {
-            Column {
-                Text(status)
-                item.overallProgress?.let {
-                    Spacer(Modifier.height(6.dp))
-                    LinearProgressIndicator(progress = { it }, modifier = Modifier.fillMaxWidth())
+    PlaylistRow(
+        text = book.title,
+        number = number,
+        trailing = total?.let(::formatTime),
+        secondary = status,
+        current = isCurrent,
+        onClick = onPlay,
+    ) {
+        Spacer(Modifier.width(6.dp))
+        Box {
+            RetroTextButton("...", { menu = true })
+            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                when (download) {
+                    DownloadState.NONE -> DropdownMenuItem(text = { Text("Download for offline") }, onClick = {
+                        menu = false
+                        Downloads.start(context, book.id)
+                    })
+                    DownloadState.RUNNING -> DropdownMenuItem(text = { Text("Cancel download") }, onClick = {
+                        menu = false
+                        Downloads.cancel(context, book.id)
+                    })
+                    DownloadState.DONE -> DropdownMenuItem(text = { Text("Remove download") }, onClick = {
+                        menu = false
+                        scope.launch { Downloads.remove(context, book.id) }
+                    })
                 }
-            }
-        },
-        trailingContent = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                DownloadButton(item)
-                Box {
-                    IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, contentDescription = "More") }
-                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                        if (book.isFolder) {
-                            DropdownMenuItem(text = { Text("Refresh from Drive") }, onClick = {
-                                menu = false
-                                scope.launch {
-                                    val msg = runCatching { app.library.refresh(book.id) }
-                                        .fold({ "Updated" }, { "Couldn't refresh: ${it.message}" })
-                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                }
-                            })
+                if (book.isFolder) {
+                    DropdownMenuItem(text = { Text("Refresh from Drive") }, onClick = {
+                        menu = false
+                        scope.launch {
+                            val msg = runCatching { app.library.refresh(book.id) }
+                                .fold({ "Updated" }, { "Couldn't refresh: ${it.message}" })
+                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                         }
-                        DropdownMenuItem(text = { Text("Remove from library") }, onClick = {
-                            menu = false
-                            scope.launch { app.library.remove(book.id) }
-                        })
-                    }
+                    })
                 }
+                DropdownMenuItem(text = { Text("Remove from library") }, onClick = {
+                    menu = false
+                    scope.launch { app.library.remove(book.id) }
+                })
             }
-        },
-    )
+        }
+    }
 }

@@ -77,7 +77,12 @@ fun AppRoot(connection: PlayerConnection) {
             )
         }
         composable("player") {
-            PlayerScreen(ui = ui, player = controller, onBack = { nav.popBackStack() })
+            PlayerScreen(
+                ui = ui,
+                player = controller,
+                onBack = { nav.popBackStack() },
+                onEject = { if (signedIn == true) nav.navigate("browse") else signIn() },
+            )
         }
     }
 }
